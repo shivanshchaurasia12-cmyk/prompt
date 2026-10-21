@@ -26,7 +26,7 @@ header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px so
 .body p{font-size:13px;color:var(--mu);line-height:1.45;flex:1}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 button.b{padding:10px 6px;border-radius:10px;border:0;font-weight:600;cursor:pointer;font-size:13px}
-.cp{background:var(--ac);color:#fff}.up{background:var(--ac2);color:#fff}
+.cp{background:var(--ac);color:#fff}.up{background:var(--ac2);color:#fff}.pv{grid-column:1/3;background:var(--bd);color:var(--tx)}
 footer{border-top:1px solid var(--bd);padding:28px 16px;color:var(--mu);font-size:14px;text-align:center}
 footer a{color:var(--ac);margin:0 8px}
 .pg{max-width:800px;margin:0 auto;padding:24px 16px;color:var(--mu);line-height:1.6}.pg h2{color:var(--tx);margin-bottom:6px}
@@ -160,9 +160,14 @@ async function copy(i,go){const p=D[i].p+(go?". Use my uploaded photo and keep m
 try{await navigator.clipboard.writeText(p)}catch(e){const a=document.createElement("textarea");a.value=p;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
 cnt[i]=(cnt[i]||0)+1;try{localStorage.setItem("pv",JSON.stringify(cnt))}catch(e){}
 if(go){toast("Copied! Upload your photo in Gemini, then paste");window.open("https://gemini.google.com/app","_blank")}else toast("Prompt copied ✓")}
+function pv(i,b){const c=b.closest('.card').querySelector('.img');let m=c.querySelector('img');if(!m){m=document.createElement('img');c.prepend(m)}m.src='https://image.pollinations.ai/prompt/'+encodeURIComponent(D[i].p)+'?width=400&height=500&nologo=true&seed='+i;toast('Making image… free limit: 1 image per 45 sec')}
+const G={};let Q=[],busy=false,last=0;
+function pu(i){return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(D[i].p)+'?width=400&height=500&nologo=true&seed='+i}
+function fb(m){m.onerror=null;const i=m.dataset.i;if(G[i]){m.src=G[i];return}Q.push(m);run()}
+function run(){if(busy)return;busy=true;const go=()=>{const m=Q.pop();if(!m){busy=false;return}if(!m.isConnected)return go();const i=m.dataset.i;last=Date.now();G[i]=pu(i);m.src=G[i];setTimeout(go,46000)};setTimeout(go,Math.max(0,46000-(Date.now()-last)))}
 function draw(){let L=D.filter(x=>(cat=="All"||(cat[0]=="🔥"?x.hot||cnt[x.id]>1:x.c==cat))&&(x.t+x.p+x.c).toLowerCase().includes(q));
 if(cat[0]=="🔥")L.sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0));
-grid.innerHTML=L.map(x=>{const h=x.id*37%360;return`<div class="card"><div class="img" style="background:linear-gradient(135deg,hsl(${h},70%,45%),hsl(${(h+60)%360},70%,30%))">${E[x.c]}<img loading="lazy" alt="${x.t}" onerror="this.remove()" src="https://image.pollinations.ai/prompt/${encodeURIComponent(x.p)}?width=400&height=500&nologo=true&seed=${x.id}">${x.hot?'<span class="tag">🔥 Trending</span>':`<span class="tag">${x.c}</span>`}</div><div class="body"><h3>${x.t}</h3><p>${x.p}</p><div class="btns"><button class="b cp" onclick="copy(${x.id},0)">Copy prompt</button><button class="b up" onclick="copy(${x.id},1)">Use my photo</button></div></div></div>`}).join("")||"<p style='padding:20px;color:var(--mu)'>No prompts found.</p>"}
+grid.innerHTML=L.map(x=>{const h=x.id*37%360;return`<div class="card"><div class="img" style="background:linear-gradient(135deg,hsl(${h},70%,45%),hsl(${(h+60)%360},70%,30%))">${E[x.c]}<img loading="lazy" alt="" data-i="${x.id}" style="opacity:0;transition:opacity .5s" onload="this.style.opacity=1" onerror="fb(this)" src="img/${x.id}.jpg">${x.hot?'<span class="tag">🔥 Trending</span>':`<span class="tag">${x.c}</span>`}</div><div class="body"><h3>${x.t}</h3><p>${x.p}</p><div class="btns"><button class="b cp" onclick="copy(${x.id},0)">Copy prompt</button><button class="b up" onclick="copy(${x.id},1)">Use my photo</button><button class="b pv" onclick="pv(${x.id},this)">Make sample image</button></div></div></div>`}).join("")||"<p style='padding:20px;color:var(--mu)'>No prompts found.</p>"}
 draw();
 if(/^https?:/.test(location.protocol)&&"serviceWorker"in navigator&&!/claude|anthropic/.test(location.host))navigator.serviceWorker.register("/sw.js").catch(()=>{});
 </script></body></html>
